@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I'm So Sorry ❤️</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Fredoka for that cute rounded look -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Floating Animation for the Ghost */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+
+        /* Sad Tear Animation */
+        @keyframes tear-drop {
+            0% { transform: translateY(0) scale(0.5); opacity: 0; }
+            30% { opacity: 1; }
+            80% { transform: translateY(20px) scale(1); opacity: 0.5; }
+            100% { transform: translateY(30px) scale(0); opacity: 0; }
+        }
+
+        /* Heart Pop Animation */
+        @keyframes heart-pop {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Shake animation for "No" interaction */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .animate-tear {
+            animation: tear-drop 2s infinite;
+        }
+
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        .animate-pop {
+            animation: heart-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Ghost State Transitions */
+        .ghost-body { transition: fill 0.5s ease; }
+        .ghost-eye { transition: cy 0.3s ease, rx 0.3s ease; }
+        .ghost-mouth { transition: d 0.3s ease, stroke 0.3s ease; }
+        .ghost-arms { transition: d 0.5s ease; }
+        .ghost-cheeks { transition: opacity 0.5s ease; }
+        
+        .blob {
+            position: absolute;
+            filter: blur(40px);
+            z-index: -1;
+            opacity: 0.6;
+            animation: float 6s ease-in-out infinite reverse;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center relative transition-colors duration-1000" id="main-body">
+
+    <!-- Background Blobs -->
+    <div class="blob bg-blue-200 w-64 h-64 rounded-full top-10 left-10 md:left-1/4"></div>
+    <div class="blob bg-pink-200 w-72 h-72 rounded-full bottom-20 right-10 md:right-1/4 animation-delay-2000"></div>
+
+    <!-- Canvas for Confetti -->
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <!-- Main Card -->
+    <div class="bg-white/80 backdrop-blur-lg border border-white/50 shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-3xl p-8 max-w-md w-full mx-4 text-center transform transition-all duration-500 hover:shadow-[0_30px_60px_rgba(0,0,0,0.15)] z-10" id="card">
+        
+        <!-- The SVG Ghost Character -->
+        <div class="h-48 w-full flex justify-center items-center mb-6 relative">
+            <svg width="200" height="200" viewBox="0 0 200 200" class="animate-float" id="ghost-svg">
+                <!-- Shadow -->
+                <ellipse cx="100" cy="180" rx="40" ry="10" fill="#E2E8F0" opacity="0.5" />
+                
+                <!-- Ghost Body -->
+                <path id="body" class="ghost-body" d="M100 20 C60 20, 30 60, 30 100 C30 160, 50 170, 60 160 C70 150, 80 170, 90 160 C100 150, 110 170, 120 160 C130 150, 140 170, 150 160 C160 170, 170 140, 170 100 C170 60, 140 20, 100 20 Z" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="3" />
+                
+                <!-- Eyes -->
+                <ellipse id="eye-left" class="ghost-eye" cx="75" cy="90" rx="6" ry="8" fill="#334155" />
+                <ellipse id="eye-right" class="ghost-eye" cx="125" cy="90" rx="6" ry="8" fill="#334155" />
+                
+                <!-- Cheeks (Hidden by default) -->
+                <ellipse class="ghost-cheeks" cx="75" cy="105" rx="8" ry="4" fill="#FDA4AF" opacity="0" />
+                <ellipse class="ghost-cheeks" cx="125" cy="105" rx="8" ry="4" fill="#FDA4AF" opacity="0" />
+
+                <!-- Mouth (Sad Arc) -->
+                <path id="mouth" class="ghost-mouth" d="M85 110 Q100 100 115 110" stroke="#334155" stroke-width="3" fill="none" stroke-linecap="round" />
+
+                <!-- Arms (Down) -->
+                <path id="arms" class="ghost-arms" d="M35 110 Q20 120 35 130 M165 110 Q180 120 165 130" stroke="#CBD5E1" stroke-width="3" fill="none" stroke-linecap="round" />
+
+                <!-- Tears (Visible by default) -->
+                <path id="tear-1" class="animate-tear" d="M75 100 Q75 110 70 115 Q75 110 80 115" fill="#60A5FA" style="transform-origin: 75px 100px;" />
+                <path id="tear-2" class="animate-tear" d="M125 100 Q125 110 120 115 Q125 110 130 115" fill="#60A5FA" style="transform-origin: 125px 100px; animation-delay: 1s;" />
+                
+                <!-- Floating Hearts (Hidden by default) -->
+                <g id="hearts-group" opacity="0">
+                    <path d="M100 50 L95 45 Q90 40 90 35 Q90 25 100 25 Q110 25 110 35 Q110 40 105 45 Z" fill="#F43F5E" transform="translate(-30, -10) scale(0.8)" />
+                    <path d="M100 50 L95 45 Q90 40 90 35 Q90 25 100 25 Q110 25 110 35 Q110 40 105 45 Z" fill="#F43F5E" transform="translate(30, -20) scale(0.6) rotate(15)" />
+                </g>
+            </svg>
+        </div>
+
+        <h1 id="title" class="text-3xl font-semibold text-slate-700 mb-2">I messed up...</h1>
+        <p id="message" class="text-slate-500 mb-8 leading-relaxed">
+            I'm really sorry for what I did. I never meant to hurt you. Can we please make up? 🥺
+        </p>
+
+        <div class="space-y-3">
+            <button onclick="acceptApology()" id="btn-yes" class="w-full bg-rose-400 hover:bg-rose-500 text-white font-semibold py-4 px-6 rounded-2xl shadow-lg shadow-rose-200 transition-all duration-300 transform hover:scale-105 active:scale-95 text-lg">
+                I Forgive You ❤️
+            </button>
+            <button onclick="rejectApology()" id="btn-no" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-medium py-3 px-6 rounded-2xl transition-colors duration-300 text-sm">
+                I need more time...
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let isForgiven = false;
+
+        // Elements
+        const ghostSvg = document.getElementById('ghost-svg');
+        const eyeLeft = document.getElementById('eye-left');
+        const eyeRight = document.getElementById('eye-right');
+        const mouth = document.getElementById('mouth');
+        const arms = document.getElementById('arms');
+        const tears = document.querySelectorAll('.animate-tear');
+        const cheeks = document.querySelectorAll('.ghost-cheeks');
+        const heartsGroup = document.getElementById('hearts-group');
+        const mainBody = document.getElementById('main-body');
+        const title = document.getElementById('title');
+        const message = document.getElementById('message');
+        const btnYes = document.getElementById('btn-yes');
+        const btnNo = document.getElementById('btn-no');
+
+        // Confetti Logic
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = -20;
+                this.vx = Math.random() * 4 - 2;
+                this.vy = Math.random() * 5 + 2;
+                this.color = `hsl(${Math.random() * 360}, 100%, 70%)`;
+                this.size = Math.random() * 8 + 4;
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = Math.random() * 10 - 5;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.rotation += this.rotationSpeed;
+                if (this.y > canvas.height) this.y = -20;
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation * Math.PI / 180);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                ctx.restore();
+            }
+        }
+
+        function startConfetti() {
+            for (let i = 0; i < 150; i++) {
+                particles.push(new Particle());
+            }
+            animateConfetti();
+        }
+
+        function animateConfetti() {
+            if (!isForgiven && particles.length === 0) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateConfetti);
+        }
+
+        // Interaction Logic
+        function acceptApology() {
+            if (isForgiven) return;
+            isForgiven = true;
+
+            // 1. Change Theme
+            mainBody.classList.remove('bg-slate-50');
+            mainBody.classList.add('bg-rose-50');
+
+            // 2. Animate Ghost to Happy
+            // Stop tears
+            tears.forEach(t => t.style.display = 'none');
+            
+            // Show Cheeks
+            cheeks.forEach(c => c.style.opacity = '0.6');
+
+            // Happy Eyes (Inverted U shape look using scale or path change, here we just lift them)
+            // Actually, let's change them to simple Happy Arcs by hiding ellipses and showing paths? 
+            // Simpler: Just lift them and make them squinty using scaleY
+            eyeLeft.setAttribute('ry', '2'); // Squint
+            eyeRight.setAttribute('ry', '2');
+            eyeLeft.setAttribute('cy', '85'); // Lift
+            eyeRight.setAttribute('cy', '85');
+
+            // Happy Mouth (U shape)
+            mouth.setAttribute('d', 'M85 105 Q100 125 115 105'); // Smile
+            
+            // Arms Up
+            arms.setAttribute('d', 'M30 110 Q20 80 40 70 M170 110 Q180 80 160 70'); // Arms raised in joy
+
+            // Show Hearts
+            heartsGroup.style.opacity = '1';
+            heartsGroup.classList.add('animate-pop');
+
+            // 3. Change Text
+            title.textContent = "Yay! Thank you! 🥰";
+            title.classList.add('text-rose-500');
+            message.textContent = "I promise to do better. You're the best!";
+            
+            // 4. Update Buttons
+            btnYes.textContent = "Best Friends Forever ✨";
+            btnYes.classList.replace('bg-rose-400', 'bg-green-400');
+            btnYes.classList.replace('shadow-rose-200', 'shadow-green-200');
+            btnYes.disabled = true;
+            btnNo.style.display = 'none';
+
+            // 5. Trigger Confetti
+            startConfetti();
+        }
+
+        function rejectApology() {
+            // Shake the card
+            const card = document.getElementById('card');
+            card.classList.remove('animate-shake');
+            void card.offsetWidth; // trigger reflow
+            card.classList.add('animate-shake');
+
+            // Make ghost sadder temporarily
+            const originalMouth = mouth.getAttribute('d');
+            mouth.setAttribute('d', 'M85 115 Q100 105 115 115'); // Frown deeper
+            setTimeout(() => {
+                if(!isForgiven) mouth.setAttribute('d', originalMouth);
+            }, 1000);
+
+            // Change button text briefly
+            const originalText = btnNo.textContent;
+            btnNo.textContent = "Please? 🥺";
+            setTimeout(() => btnNo.textContent = originalText, 1500);
+        }
+
+    </script>
+</body>
+</html>
